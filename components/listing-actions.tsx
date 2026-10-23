@@ -1,0 +1,12 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+export function ListingActions({propertyId,authenticated,initialSaved=false}:{propertyId:string;authenticated:boolean;initialSaved?:boolean}){
+  const [saved,setSaved]=useState(initialSaved);const [reportOpen,setReportOpen]=useState(false);const [reason,setReason]=useState("");const [message,setMessage]=useState("");const [busy,setBusy]=useState(false);const router=useRouter();
+  async function toggleSave(){if(!authenticated){router.push("/sign-in");return;}setBusy(true);const response=await fetch(`/api/saved/${propertyId}`,{method:"POST"});const result=await response.json();if(response.ok)setSaved(result.saved);else setMessage(result.error);setBusy(false);}
+  async function report(){setBusy(true);const response=await fetch("/api/reports",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({property_id:propertyId,reason})});const result=await response.json();setMessage(response.ok?result.message:result.error);if(response.ok)setReportOpen(false);setBusy(false);}
+  async function chat(){if(!authenticated){router.push("/sign-in?next=/listings/"+propertyId);return;}setBusy(true);const response=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({property_id:propertyId,body:"Hello, I’m interested in this property. Is it available, and when can I inspect it?"})});const result=await response.json();if(response.ok)router.push(`/chat/${result.thread_id}`);else setMessage(result.error);setBusy(false);}
+  return <div className="listing-actions"><button type="button" className="secondary-button" onClick={toggleSave} disabled={busy}>{saved?"Saved ✓":"Save home"}</button><button type="button" className="primary-button" onClick={chat} disabled={busy}>Chat to book inspection <span aria-hidden="true">→</span></button><button type="button" className="text-button" onClick={()=>setReportOpen(!reportOpen)}>Report this listing</button>{reportOpen&&<form className="report-form" onSubmit={(event)=>{event.preventDefault();void report();}}><label htmlFor="report-reason">What should the review team know?</label><textarea id="report-reason" value={reason} onChange={(event)=>setReason(event.target.value)} required minLength={10} maxLength={1000}/><button type="submit" className="secondary-button" disabled={busy}>Send report</button></form>}{message&&<p role="status" className="form-notice">{message}</p>}</div>;
+}

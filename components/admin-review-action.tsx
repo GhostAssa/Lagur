@@ -1,0 +1,5 @@
+"use client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+export default function AdminReviewAction({propertyId,action,label,needsNote=false}:{propertyId:string;action:"approve"|"reject"|"suspend";label:string;needsNote?:boolean}){const [note,setNote]=useState("");const [error,setError]=useState("");const [busy,setBusy]=useState(false);const router=useRouter();return <form className="admin-review-action" onSubmit={async(event)=>{event.preventDefault();setBusy(true);setError("");const response=await fetch("/api/admin/review",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({property_id:propertyId,action,note})});const result=await response.json();if(!response.ok)setError(result.error);else router.refresh();setBusy(false);}}>{needsNote&&<label>Reason or notes<textarea value={note} onChange={(event)=>setNote(event.target.value)} required minLength={action==="reject"?5:10} maxLength={1000}/></label>}<button className={action==="approve"?"primary-button":"secondary-button"} disabled={busy}>{busy?"Saving…":label}</button>{error&&<small role="alert">{error}</small>}</form>}

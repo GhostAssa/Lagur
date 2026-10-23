@@ -1,0 +1,11 @@
+node_modules/
+.npm-cache/
+.next/
+out/
+build/
+coverage/
+.env*
+!.env.example
+*.tsbuildinfo
+public/media/videos/lagos.mp4
+public/media/videos/*.mp4 

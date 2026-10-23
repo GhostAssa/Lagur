@@ -1,0 +1,41 @@
+{
+  "name": "ods-house-hunting",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.2.0",
+    "@fontsource/caveat": "^5.3.0",
+    "@fontsource/dm-sans": "latest",
+    "@fontsource/instrument-serif": "latest",
+    "@fontsource/inter-tight": "^5.3.0",
+    "@fontsource/manrope": "^5.3.0",
+    "@fontsource/space-mono": "^5.3.0",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.118.0",
+    "autoprefixer": "latest",
+    "gsap": "^3.15.0",
+    "lenis": "^1.3.27",
+    "maplibre-gl": "^6.15.0",
+    "next": "16.4.2",
+    "postcss": "latest",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "resend": "^6.34.1",
+    "tailwindcss": "3.4.18",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@typescript-eslint/parser": "latest",
+    "eslint": "latest",
+    "typescript": "6.0.3"
+  }
+}
