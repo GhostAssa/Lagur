@@ -59,9 +59,13 @@ export async function GET(request: NextRequest) {
         store.set("lagur_auth_role", "", { path: "/", maxAge: 0, sameSite: "lax", httpOnly: true });
         return NextResponse.redirect(new URL(next.startsWith("/") ? next : "/dashboard", request.url));
       }
+
+      const errorMessage = error?.message ?? "Verification link could not be used.";
+      store.set("lagur_auth_role", "", { path: "/", maxAge: 0, sameSite: "lax", httpOnly: true });
+      return NextResponse.redirect(new URL(`/sign-in?error=${encodeURIComponent(errorMessage)}`, request.url));
     }
   }
 
   store.set("lagur_auth_role", "", { path: "/", maxAge: 0, sameSite: "lax", httpOnly: true });
-  return NextResponse.redirect(new URL("/sign-in?error=Verification+link+could+not+be+used.", request.url));
+  return NextResponse.redirect(new URL("/sign-in?error=Verification+link+could+not+be+used.+Check+your+Supabase+redirect+settings+and+try+again.", request.url));
 }
