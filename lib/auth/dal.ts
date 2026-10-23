@@ -1,18 +1,32 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { buildAppUser, type AppRole, type AppUser } from "@/lib/auth/profile";
 
-export type AppRole = "customer" | "agent" | "company" | "admin";
-export type AppUser = { id: string; email: string; role: AppRole; fullName: string };
+export type { AppRole, AppUser } from "@/lib/auth/profile";
 
 export async function getUser(): Promise<AppUser | null> {
   const supabase = await createClient();
   if (!supabase) return null;
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) return null;
-  const { data: profile } = await supabase.from("users").select("role,full_name").eq("id", user.id).single();
-  if (!profile) return null;
-  return { id: user.id, email: user.email ?? "", role: profile.role as AppRole, fullName: profile.full_name ?? "" };
+
+  const { data: profile, error: profileError } = await supabase.from("users").select("role,full_name").eq("id", user.id).maybeSingle();
+  const resolvedUser = buildAppUser(user, profile ?? null);
+
+  if (!resolvedUser) return null;
+
+  if (profileError || !profile) {
+    await supabase.from("users").upsert({
+      id: user.id,
+      role: resolvedUser.role,
+      full_name: resolvedUser.fullName,
+      phone: typeof user.user_metadata?.phone === "string" ? user.user_metadata.phone : null,
+    }, { onConflict: "id" });
+    return resolvedUser;
+  }
+
+  return resolvedUser;
 }
 
 export async function requireUser(roles?: AppRole[]) {
