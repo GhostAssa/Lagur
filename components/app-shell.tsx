@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { signOut } from "@/app/actions/auth";
 import type { AppRole, AppUser } from "@/lib/auth/dal";
 
@@ -10,13 +13,48 @@ const navigation: Record<AppRole, Array<[string, string]>> = {
 };
 
 export function AppShell({ user, children }: { user: AppUser; children: React.ReactNode }) {
-  return <div className="product-shell">
-    <aside className="product-sidebar">
-      <Link className="product-brand" href="/">Lagur<span>+</span></Link>
-      <p className="eyebrow">YOUR WORKSPACE</p>
-      <nav aria-label="Workspace">{navigation[user.role].map(([label, href]) => <Link key={href} href={href}>{label}<span aria-hidden="true">→</span></Link>)}</nav>
-      <form action={signOut} className="sidebar-signout"><button type="submit">Sign out <span aria-hidden="true">↗</span></button></form>
-    </aside>
-    <div className="product-main"><header className="product-topbar"><div><span className="eyebrow">{user.role.toUpperCase()} ACCOUNT</span><strong>{user.fullName || user.email}</strong></div><Link className="product-avatar" href="/profile" aria-label="Open profile">{(user.fullName || user.email).slice(0,1).toUpperCase()}</Link></header><main className="product-content">{children}</main></div>
-  </div>;
+  const pathname = usePathname();
+
+  return (
+    <div className="product-shell">
+      <aside className="product-sidebar">
+        <Link className="product-brand" href="/">Lagur<span>+</span></Link>
+        <p className="eyebrow">YOUR WORKSPACE</p>
+        <nav aria-label="Workspace">
+          {navigation[user.role].map(([label, href]) => {
+            const isActive = pathname === href || pathname.startsWith(`${href}/`);
+
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`nav-item ${isActive ? "is-active" : ""}`}
+                aria-current={isActive ? "page" : undefined}
+              >
+                {label}
+                <span aria-hidden="true">→</span>
+              </Link>
+            );
+          })}
+        </nav>
+        <form action={signOut} className="sidebar-signout">
+          <button type="submit">Sign out <span aria-hidden="true">↗</span></button>
+        </form>
+      </aside>
+
+      <div className="product-main">
+        <header className="product-topbar">
+          <div>
+            <span className="eyebrow">{user.role.toUpperCase()} ACCOUNT</span>
+            <strong>{user.fullName || user.email}</strong>
+          </div>
+          <Link className="product-avatar" href="/profile" aria-label="Open profile">
+            {(user.fullName || user.email).slice(0, 1).toUpperCase()}
+          </Link>
+        </header>
+
+        <main className="product-content">{children}</main>
+      </div>
+    </div>
+  );
 }
