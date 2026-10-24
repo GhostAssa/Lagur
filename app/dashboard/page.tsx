@@ -3,6 +3,8 @@ import { AppShell } from "@/components/app-shell";
 import { getUser, requireUser } from "@/lib/auth/dal";
 import { createClient } from "@/lib/supabase/server";
 
+const demoMode = () => !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
 const naira = (kobo: number) =>
   new Intl.NumberFormat("en-NG", {
     style: "currency",
@@ -11,20 +13,28 @@ const naira = (kobo: number) =>
   }).format(kobo / 100);
 
 export default async function DashboardPage() {
-  const user = await requireUser();
-  const supabase = await createClient();
-  const userRecord = await getUser();
+  const isDemoMode = demoMode();
+  const demoUser = {
+    id: "demo-customer",
+    email: "demo@lagur.app",
+    role: "customer" as const,
+    fullName: "Demo Customer",
+  };
+
+  const user = isDemoMode ? demoUser : await requireUser();
+  const supabase = isDemoMode ? null : await createClient();
+  const userRecord = isDemoMode ? demoUser : await getUser();
 
   const customer = user.role === "customer";
   const admin = user.role === "admin";
 
   const { count: unreadCount } = supabase
     ? await supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null).eq("user_id", user.id)
-    : { count: null };
+    : { count: 0 };
 
   const { count: savedCount } = supabase
     ? await supabase.from("saved_properties").select("property_id", { count: "exact", head: true }).eq("user_id", user.id)
-    : { count: null };
+    : { count: 0 };
 
   const recentSavedResponse = supabase
     ? await supabase
