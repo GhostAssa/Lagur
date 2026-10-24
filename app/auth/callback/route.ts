@@ -1,93 +1,63 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, after, type NextRequest } from "next/server";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { ensureProfile, landingFor } from "@/lib/auth/profile";
 import { sendWelcomeEmail } from "@/lib/email/resend";
 
-const validRoles = new Set(["customer", "agent", "company"]);
-
-function normaliseRole(value: string | null | undefined) {
-  if (value && validRoles.has(value)) return value;
-  return "customer";
+function publicOrigin(request: NextRequest) {
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  if (!host) return request.nextUrl.origin;
+  const proto = host.startsWith("localhost")
+    ? "http"
+    : (request.headers.get("x-forwarded-proto") ?? "https");
+  return `${proto}://${host}`;
 }
 
 export async function GET(request: NextRequest) {
-  const code = request.nextUrl.searchParams.get("code");
-  const next = request.nextUrl.searchParams.get("next") ?? "/dashboard";
-  const roleFromQuery = normaliseRole(request.nextUrl.searchParams.get("role"));
-  const oauthError = request.nextUrl.searchParams.get("error_description") ?? request.nextUrl.searchParams.get("error") ?? "";
+  const origin = publicOrigin(request);
+  const fail = (message: string) =>
+    NextResponse.redirect(`${origin}/sign-in?error=${encodeURIComponent(message)}`);
 
-  if (oauthError) {
-    return NextResponse.redirect(new URL(`/sign-in?error=${encodeURIComponent(oauthError)}`, request.url));
-  }
+  const params = request.nextUrl.searchParams;
+  const oauthError = params.get("error_description") ?? params.get("error");
+  if (oauthError) return fail(oauthError);
 
+  const code = params.get("code");
   if (!code) {
-    return NextResponse.redirect(new URL("/sign-in?error=Google+sign-in+was+cancelled+or+the+redirect+was+misconfigured.+Please+try+again.", request.url));
+    return fail("No sign-in code came back. Check the Redirect URLs in Supabase.");
   }
 
   const supabase = await createClient();
-  if (!supabase) {
-    return NextResponse.redirect(new URL("/sign-in?error=Add+Supabase+credentials+to+the+app+environment+before+signing+in.", request.url));
+  if (!supabase) return fail("Supabase is not configured on the server.");
+
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  if (error || !data.user) {
+    return fail(error?.message ?? "Could not create a session.");
   }
 
-  let data;
-  let error;
+  const cookieStore = await cookies();
+  const wanted = cookieStore.get("lagur_role")?.value ?? "customer";
+  cookieStore.delete("lagur_role");
 
+  let role: string;
   try {
-    ({ data, error } = await supabase.auth.exchangeCodeForSession(code));
-  } catch (exchangeError) {
-    console.error("OAuth exchange failed:", exchangeError);
-    return NextResponse.redirect(new URL(`/sign-in?error=${encodeURIComponent("Verification link could not be used. Please check your Supabase Auth redirect settings.")}`, request.url));
+    ({ role } = await ensureProfile(supabase, data.user, wanted));
+  } catch (e) {
+    return fail(e instanceof Error ? e.message : "Profile could not be saved.");
   }
 
-  if (!error && data.user) {
-    const role = normaliseRole(data.user.user_metadata?.role ?? roleFromQuery);
-    const fullName = data.user.user_metadata?.full_name ?? data.user.user_metadata?.name ?? "";
-    const phone = data.user.user_metadata?.phone ?? "";
-    const businessName = data.user.user_metadata?.business_name ?? "";
-    const rcNumber = data.user.user_metadata?.rc_number ?? "";
-
-    const profile = {
-      id: data.user.id,
-      role,
-      full_name: fullName || "Google user",
-      phone: phone || null,
-    };
-
-    await supabase.from("users").upsert(profile, { onConflict: "id" });
-
-    if (role === "agent" || role === "company") {
-      await supabase.from("agencies").upsert({
-        owner_id: data.user.id,
-        business_name: businessName || "My agency",
-        rc_number: rcNumber || null,
-        status: "pending",
-      }, { onConflict: "owner_id" });
-    }
-
-    await supabase.auth.updateUser({
-      data: {
-        role,
-        full_name: fullName || "Google user",
-        phone: phone || "",
-        business_name: businessName || "",
-        rc_number: rcNumber || "",
-      },
-    });
-
+  const user = data.user;
+  after(async () => {
     try {
       await sendWelcomeEmail({
-        email: data.user.email ?? "",
-        fullName: fullName || "there",
+        email: user.email ?? "",
+        fullName: user.user_metadata?.full_name ?? "there",
         role,
       });
-    } catch (emailError) {
-      console.warn("Welcome email failed after OAuth callback", emailError);
+    } catch (e) {
+      console.warn("Welcome email failed", e);
     }
+  });
 
-    const destination = next.startsWith("/") ? next : "/dashboard";
-    return NextResponse.redirect(new URL(destination, request.url));
-  }
-
-  const errorMessage = error?.message ?? "Verification link could not be used.";
-  console.error("OAuth callback failed:", errorMessage, { url: request.url, code: Boolean(code), roleFromQuery });
-  return NextResponse.redirect(new URL(`/sign-in?error=${encodeURIComponent(errorMessage)}`, request.url));
+  return NextResponse.redirect(`${origin}${landingFor(role)}`);
 }
