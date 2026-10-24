@@ -27,7 +27,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in?error=Add+Supabase+credentials+to+the+app+environment+before+signing+in.", request.url));
   }
 
-  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  let data;
+  let error;
+
+  try {
+    ({ data, error } = await supabase.auth.exchangeCodeForSession(code));
+  } catch (exchangeError) {
+    console.error("OAuth exchange failed:", exchangeError);
+    return NextResponse.redirect(new URL(`/sign-in?error=${encodeURIComponent("Verification link could not be used. Please check your Supabase Auth redirect settings.")}`, request.url));
+  }
+
   if (!error && data.user) {
     const role = validRoles.has(roleFromCookie ?? "") ? roleFromCookie : (data.user.user_metadata?.role ?? "customer");
     const fullName = data.user.user_metadata?.full_name ?? data.user.user_metadata?.name ?? "";
@@ -69,8 +78,8 @@ export async function GET(request: NextRequest) {
         fullName: fullName || "there",
         role,
       });
-    } catch {
-      // Intentionally ignore email failures so users are still taken to their dashboard.
+    } catch (emailError) {
+      console.warn("Welcome email failed after OAuth callback", emailError);
     }
 
     const destination = next.startsWith("/") ? next : "/dashboard";
@@ -78,5 +87,6 @@ export async function GET(request: NextRequest) {
   }
 
   const errorMessage = error?.message ?? "Verification link could not be used.";
+  console.error("OAuth callback failed:", errorMessage, { url: request.url, code: Boolean(code), hasRoleCookie: Boolean(roleFromCookie) });
   return NextResponse.redirect(new URL(`/sign-in?error=${encodeURIComponent(errorMessage)}`, request.url));
 }
