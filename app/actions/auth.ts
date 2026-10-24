@@ -1,6 +1,5 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
@@ -27,11 +26,6 @@ function authRedirectBase() {
   if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return "http://localhost:3000";
-}
-
-async function rememberRole(role: string) {
-  const store = await cookies();
-  store.set("lagur_auth_role", role, { path: "/", sameSite: "lax", httpOnly: true, secure: process.env.NODE_ENV === "production", maxAge: 60 * 10 });
 }
 
 export async function signUp(formData: FormData) {
@@ -73,12 +67,11 @@ export async function signInWithGoogle(formData: FormData) {
   const role = normaliseRole(formData.get("role"));
   const supabase = await createClient();
   if (!supabase) redirect("/sign-in?error=Add+Supabase+credentials+to+.env.local+to+enable+accounts.");
-  await rememberRole(role);
   const nextPath = roleLandingPath(role);
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${authRedirectBase()}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+      redirectTo: `${authRedirectBase()}/auth/callback?next=${encodeURIComponent(nextPath)}&role=${encodeURIComponent(role)}`,
       queryParams: { prompt: "select_account" },
     },
   });
@@ -91,12 +84,11 @@ export async function signUpWithGoogle(formData: FormData) {
   const role = normaliseRole(formData.get("role"));
   const supabase = await createClient();
   if (!supabase) redirect("/sign-up?error=Add+Supabase+credentials+to+.env.local+to+enable+accounts.");
-  await rememberRole(role);
   const nextPath = roleLandingPath(role);
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${authRedirectBase()}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+      redirectTo: `${authRedirectBase()}/auth/callback?next=${encodeURIComponent(nextPath)}&role=${encodeURIComponent(role)}`,
       queryParams: { prompt: "select_account" },
     },
   });

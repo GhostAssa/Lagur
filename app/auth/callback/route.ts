@@ -1,18 +1,19 @@
-import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendWelcomeEmail } from "@/lib/email/resend";
 
 const validRoles = new Set(["customer", "agent", "company"]);
 
+function normaliseRole(value: string | null | undefined) {
+  if (value && validRoles.has(value)) return value;
+  return "customer";
+}
+
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const next = request.nextUrl.searchParams.get("next") ?? "/dashboard";
+  const roleFromQuery = normaliseRole(request.nextUrl.searchParams.get("role"));
   const oauthError = request.nextUrl.searchParams.get("error_description") ?? request.nextUrl.searchParams.get("error") ?? "";
-  const store = await cookies();
-  const roleFromCookie = store.get("lagur_auth_role")?.value;
-
-  store.set("lagur_auth_role", "", { path: "/", maxAge: 0, sameSite: "lax", httpOnly: true });
 
   if (oauthError) {
     return NextResponse.redirect(new URL(`/sign-in?error=${encodeURIComponent(oauthError)}`, request.url));
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!error && data.user) {
-    const role = validRoles.has(roleFromCookie ?? "") ? roleFromCookie : (data.user.user_metadata?.role ?? "customer");
+    const role = normaliseRole(data.user.user_metadata?.role ?? roleFromQuery);
     const fullName = data.user.user_metadata?.full_name ?? data.user.user_metadata?.name ?? "";
     const phone = data.user.user_metadata?.phone ?? "";
     const businessName = data.user.user_metadata?.business_name ?? "";
@@ -87,6 +88,6 @@ export async function GET(request: NextRequest) {
   }
 
   const errorMessage = error?.message ?? "Verification link could not be used.";
-  console.error("OAuth callback failed:", errorMessage, { url: request.url, code: Boolean(code), hasRoleCookie: Boolean(roleFromCookie) });
+  console.error("OAuth callback failed:", errorMessage, { url: request.url, code: Boolean(code), roleFromQuery });
   return NextResponse.redirect(new URL(`/sign-in?error=${encodeURIComponent(errorMessage)}`, request.url));
 }
