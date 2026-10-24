@@ -1,32 +1,56 @@
 import "server-only";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { buildAppUser, type AppRole, type AppUser } from "@/lib/auth/profile";
+import { buildAppUser, ensureProfile, type AppRole, type AppUser } from "@/lib/auth/profile";
 
 export type { AppRole, AppUser } from "@/lib/auth/profile";
+
+export const verifySession = cache(async () => {
+  const supabase = await createClient();
+  if (!supabase) redirect("/sign-in?error=Server+is+not+configured");
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/sign-in");
+
+  const { role } = await ensureProfile(supabase, user, "customer");
+  return { user, role };
+});
 
 export async function getUser(): Promise<AppUser | null> {
   const supabase = await createClient();
   if (!supabase) return null;
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
   if (error || !user) return null;
 
-  const { data: profile, error: profileError } = await supabase.from("users").select("role,full_name").eq("id", user.id).maybeSingle();
-  const resolvedUser = buildAppUser(user, profile ?? null);
+  const { data: profile, error: profileError } = await supabase
+    .from("users")
+    .select("role,full_name")
+    .eq("id", user.id)
+    .maybeSingle();
 
-  if (!resolvedUser) return null;
-
-  if (profileError || !profile) {
-    await supabase.from("users").upsert({
-      id: user.id,
-      role: resolvedUser.role,
-      full_name: resolvedUser.fullName,
-      phone: typeof user.user_metadata?.phone === "string" ? user.user_metadata.phone : null,
-    }, { onConflict: "id" });
-    return resolvedUser;
+  let role = "customer";
+  if (!profile || profileError) {
+    try {
+      ({ role } = await ensureProfile(supabase, user, "customer"));
+    } catch {
+      return buildAppUser(user, { role: "customer", full_name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? "" }) ?? null;
+    }
+  } else {
+    role = profile.role ?? "customer";
   }
 
-  return resolvedUser;
+  const finalProfile = profile ?? {
+    role,
+    full_name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? "",
+  };
+
+  return buildAppUser(user, finalProfile) ?? null;
 }
 
 export async function requireUser(roles?: AppRole[]) {
