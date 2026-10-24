@@ -12,18 +12,20 @@ const naira = (kobo: number) =>
     maximumFractionDigits: 0,
   }).format(kobo / 100);
 
-export default async function DashboardPage() {
-  const isDemoMode = demoMode();
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ preview?: string }> }) {
+  const params = await searchParams;
+  const previewRole = params.preview === "agent" ? "agent" : params.preview === "customer" ? "customer" : null;
+  const isDemoMode = demoMode() || Boolean(previewRole);
   const demoUser = {
     id: "demo-customer",
     email: "demo@lagur.app",
-    role: "customer" as const,
-    fullName: "Demo Customer",
+    role: (previewRole ?? "customer") as "customer" | "agent" | "company" | "admin",
+    fullName: previewRole === "agent" ? "Demo Agent" : "Demo Customer",
   };
 
-  const user = isDemoMode ? demoUser : await requireUser();
-  const supabase = isDemoMode ? null : await createClient();
-  const userRecord = isDemoMode ? demoUser : await getUser();
+  const user = previewRole ? demoUser : isDemoMode ? demoUser : await requireUser();
+  const supabase = previewRole || isDemoMode ? null : await createClient();
+  const userRecord = previewRole ? demoUser : isDemoMode ? demoUser : await getUser();
 
   const customer = user.role === "customer";
   const admin = user.role === "admin";
@@ -121,6 +123,41 @@ export default async function DashboardPage() {
 
         {!customer && !admin && (
           <>
+            <section className="dashboard-signal glass-surface">
+              <div className="panel-header">
+                <div>
+                  <p className="eyebrow">MARKET SIGNAL</p>
+                  <h2>Performance overview</h2>
+                </div>
+                <span className="trend-pill">+18.4% this week</span>
+              </div>
+
+              <div className="signal-chart-wrap">
+                <svg viewBox="0 0 820 220" className="signal-chart" role="img" aria-label="Performance chart">
+                  <defs>
+                    <linearGradient id="signalFill" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0%" stopColor="rgba(52, 185, 105, 0.35)" />
+                      <stop offset="100%" stopColor="rgba(52, 185, 105, 0.02)" />
+                    </linearGradient>
+                  </defs>
+                  <g className="chart-grid">
+                    {[0,1,2,3,4].map((line) => (
+                      <line key={line} x1="0" x2="820" y1={26 + line * 42} y2={26 + line * 42} />
+                    ))}
+                  </g>
+                  <path d="M0,170 C90,150,110,132,150,138 S230,128,280,98 S380,76,430,96 S530,72,620,52 S720,22,820,68 L820,220 L0,220 Z" fill="url(#signalFill)"/>
+                  <path d="M0,170 C90,150,110,132,150,138 S230,128,280,98 S380,76,430,96 S530,72,620,52 S720,22,820,68" fill="none" stroke="#1b7d4e" strokeWidth="4" strokeLinecap="round"/>
+                  <circle cx="620" cy="52" r="7" fill="#0d5b39" />
+                </svg>
+              </div>
+
+              <div className="chart-axis">
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+                  <span key={day}>{day}</span>
+                ))}
+              </div>
+            </section>
+
             <section className="dashboard-metric-grid">
               {metrics.map((metric) => (
                 <article key={metric.label} className="dashboard-metric glass-surface">
