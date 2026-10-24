@@ -14,6 +14,12 @@ const navigation: Record<AppRole, Array<[string, string]>> = {
 
 export function AppShell({ user, children }: { user: AppUser; children: React.ReactNode }) {
   const pathname = usePathname();
+  const workspaceRoutes = ["/dashboard", "/search", "/saved", "/profile", "/inbox", "/map", "/agent", "/admin"];
+  const shouldShowSidebar = workspaceRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+
+  if (!shouldShowSidebar) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="product-shell">

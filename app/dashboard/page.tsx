@@ -74,113 +74,229 @@ export default async function DashboardPage() {
           ["Hosting plan", "Review your hosting status and available plans.", "/agent/billing", "View plan"],
         ];
 
+  const agentLocations = [
+    ["Lekki Phase 1", 42],
+    ["Yaba", 33],
+    ["Wuse", 26],
+    ["Ikeja", 21],
+  ];
+
+  const propertyTypes = [
+    ["Residential rentals", 48],
+    ["Land plots", 35],
+    ["Duplexes", 27],
+    ["Commercial space", 18],
+  ];
+
+  const metrics = [
+    { label: "Searches this week", value: "4,820", note: "+18%" },
+    { label: "Times you appeared", value: "1,260", note: "+12%" },
+    { label: "Sold / allocated", value: "84", note: "+9%" },
+  ];
+
   return (
     <AppShell user={userRecord ?? user}>
-      <header className="page-heading">
-        <p className="eyebrow">YOUR LAGUR WORKSPACE</p>
-        <h1>
-          Good to see you,<br />
-          <span>{user.fullName.split(" ")[0] || "welcome"}.</span>
-        </h1>
-        <p>
-          {customer
-            ? "Search at your pace. Your next place starts with the homes, cities, and trust signals that matter to you."
-            : admin
-              ? "Your review decisions keep the marketplace useful and accountable."
-              : "Keep your property information, documents and conversations together."}
-        </p>
-      </header>
-
-      {customer && (
-        <section className="workspace-summary">
-          <div>
-            <span className="eyebrow">SAVED HOMES</span>
-            <strong>{savedCount ?? 0}</strong>
-          </div>
-          <div>
-            <span className="eyebrow">UNREAD UPDATES</span>
-            <strong>{unreadCount ?? 0}</strong>
-          </div>
-          <div>
-            <span className="eyebrow">NEXT STEP</span>
-            <strong>Search now</strong>
-          </div>
-        </section>
-      )}
-
-      {!customer && !admin && (
-        <section className="workspace-summary">
-          <div>
-            <span className="eyebrow">ACCOUNT</span>
-            <strong>{user.role === "company" ? "Real estate company" : user.role[0].toUpperCase() + user.role.slice(1)}</strong>
-          </div>
-          <div>
-            <span className="eyebrow">NOTIFICATIONS</span>
-            <strong>{unreadCount ?? 0} unread</strong>
-          </div>
-          <div>
-            <span className="eyebrow">LISTINGS</span>
-            <strong>{activeCount ?? 0} in progress</strong>
-          </div>
-        </section>
-      )}
-
-      {customer && latestSaved && (
-        <section className="browse-section" style={{ marginBottom: 32 }}>
-          <div className="browse-heading">
-            <div>
-              <p className="eyebrow">YOUR SHORTLIST</p>
-              <h2>Recently saved</h2>
-            </div>
-            <Link href="/saved">View all saved</Link>
+      <div className="dashboard-overview">
+        <header className="dashboard-hero glass-surface">
+          <div className="dashboard-hero-copy">
+            <p className="eyebrow">AGENT PERFORMANCE</p>
+            <h1>
+              Hello <span>{user.fullName.split(" ")[0] || "there"}</span>
+            </h1>
+            <p>
+              {customer
+                ? "Search at your pace. Your next place starts with the homes, cities, and trust signals that matter to you."
+                : admin
+                  ? "Your review decisions keep the marketplace useful and accountable."
+                  : "See what is moving, where demand is strongest, and which property types are winning right now."}
+            </p>
           </div>
 
-          <div className="listing-grid">
-            <article className="listing-card" key={latestSaved.id}>
-              <Link href={`/listings/${latestSaved.id}`} className="listing-photo">
-                {latestSaved.property_media && latestSaved.property_media.length > 0 ? (
-                  <img src={latestSaved.property_media[0].url} alt={latestSaved.property_media[0].alt ?? latestSaved.title} loading="lazy" />
-                ) : (
-                  <span className="listing-photo-placeholder">{latestSaved.type?.replaceAll("_", " ") ?? "Home"}</span>
-                )}
-                <span className="verified-chip">✓ Verified</span>
-              </Link>
-              <div className="listing-card-body">
-                <p className="eyebrow">{latestSaved.category} · {latestSaved.type?.replaceAll("_", " ")}</p>
-                <h3>
-                  <Link href={`/listings/${latestSaved.id}`}>{latestSaved.title}</Link>
-                </h3>
-                <p>{latestSaved.city}, {latestSaved.state}</p>
-                <strong>{naira(latestSaved.price_kobo)}</strong>
-                <Link className="listing-card-link" href={`/listings/${latestSaved.id}`}>
-                  View details <span aria-hidden="true">→</span>
-                </Link>
+          <div className="dashboard-range" aria-label="Date range selector">
+            <button type="button" className="is-active">Today</button>
+            <button type="button">Week</button>
+            <button type="button">Month</button>
+          </div>
+        </header>
+
+        {!customer && !admin && (
+          <>
+            <section className="dashboard-metric-grid">
+              {metrics.map((metric) => (
+                <article key={metric.label} className="dashboard-metric glass-surface">
+                  <span className="eyebrow">{metric.label}</span>
+                  <div className="metric-row">
+                    <strong>{metric.value}</strong>
+                    <span>{metric.note}</span>
+                  </div>
+                </article>
+              ))}
+            </section>
+
+            <section className="dashboard-breakdown">
+              <article className="dashboard-panel glass-surface">
+                <div className="panel-header">
+                  <div>
+                    <p className="eyebrow">TOP LOCATIONS</p>
+                    <h2>Best locations selling</h2>
+                  </div>
+                  <Link href="/search">See all</Link>
+                </div>
+
+                <div className="listing-bars">
+                  {agentLocations.map(([location, count]) => (
+                    <div key={location} className="listing-row">
+                      <div className="listing-labels">
+                        <span>{location}</span>
+                        <b>{count}%</b>
+                      </div>
+                      <div className="bar-track">
+                        <span style={{ width: `${count}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </article>
+
+              <article className="dashboard-panel glass-surface">
+                <div className="panel-header">
+                  <div>
+                    <p className="eyebrow">TOP TYPES</p>
+                    <h2>Best property types</h2>
+                  </div>
+                  <Link href="/search">See all</Link>
+                </div>
+
+                <div className="listing-bars">
+                  {propertyTypes.map(([type, count]) => (
+                    <div key={type} className="listing-row">
+                      <div className="listing-labels">
+                        <span>{type}</span>
+                        <b>{count}%</b>
+                      </div>
+                      <div className="bar-track">
+                        <span style={{ width: `${count}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            </section>
+          </>
+        )}
+
+        {customer && (
+          <>
+            <section className="workspace-summary">
+              <div>
+                <span className="eyebrow">SAVED HOMES</span>
+                <strong>{savedCount ?? 0}</strong>
               </div>
-            </article>
-          </div>
-        </section>
-      )}
+              <div>
+                <span className="eyebrow">UNREAD UPDATES</span>
+                <strong>{unreadCount ?? 0}</strong>
+              </div>
+              <div>
+                <span className="eyebrow">NEXT STEP</span>
+                <strong>Search now</strong>
+              </div>
+            </section>
 
-      <section className="workspace-grid">
-        {cards.map(([title, description, href, action], index) => (
-          <article className="workspace-card" key={href}>
-            <span className="workspace-card-number">0{index + 1}</span>
-            <p className="eyebrow">{customer ? "CUSTOMER" : admin ? "ADMIN" : "PROPERTY PROFESSIONAL"}</p>
-            <h2>{title}</h2>
-            <p>{description}</p>
-            <Link href={href}>
-              {action}
-              <span aria-hidden="true">→</span>
-            </Link>
-          </article>
-        ))}
-      </section>
+            {latestSaved && (
+              <section className="browse-section" style={{ marginBottom: 32 }}>
+                <div className="browse-heading">
+                  <div>
+                    <p className="eyebrow">YOUR SHORTLIST</p>
+                    <h2>Recently saved</h2>
+                  </div>
+                  <Link href="/saved">View all saved</Link>
+                </div>
 
-      {customer && (
-        <p className="honest-note">
-          <strong>Before you pay:</strong> Lagur reviews submitted documents and checks for duplicate listings. We do not guarantee legal title. Use a lawyer and a surveyor.
-        </p>
-      )}
+                <div className="listing-grid">
+                  <article className="listing-card" key={latestSaved.id}>
+                    <Link href={`/listings/${latestSaved.id}`} className="listing-photo">
+                      {latestSaved.property_media && latestSaved.property_media.length > 0 ? (
+                        <img src={latestSaved.property_media[0].url} alt={latestSaved.property_media[0].alt ?? latestSaved.title} loading="lazy" />
+                      ) : (
+                        <span className="listing-photo-placeholder">{latestSaved.type?.replaceAll("_", " ") ?? "Home"}</span>
+                      )}
+                      <span className="verified-chip">✓ Verified</span>
+                    </Link>
+                    <div className="listing-card-body">
+                      <p className="eyebrow">{latestSaved.category} · {latestSaved.type?.replaceAll("_", " ")}</p>
+                      <h3>
+                        <Link href={`/listings/${latestSaved.id}`}>{latestSaved.title}</Link>
+                      </h3>
+                      <p>{latestSaved.city}, {latestSaved.state}</p>
+                      <strong>{naira(latestSaved.price_kobo)}</strong>
+                      <Link className="listing-card-link" href={`/listings/${latestSaved.id}`}>
+                        View details <span aria-hidden="true">→</span>
+                      </Link>
+                    </div>
+                  </article>
+                </div>
+              </section>
+            )}
+          </>
+        )}
+
+        {admin && (
+          <section className="workspace-grid">
+            {cards.map(([title, description, href, action], index) => (
+              <article className="workspace-card" key={href}>
+                <span className="workspace-card-number">0{index + 1}</span>
+                <p className="eyebrow">ADMIN</p>
+                <h2>{title}</h2>
+                <p>{description}</p>
+                <Link href={href}>
+                  {action}
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </article>
+            ))}
+          </section>
+        )}
+
+        {!customer && !admin && (
+          <section className="workspace-grid">
+            {cards.map(([title, description, href, action], index) => (
+              <article className="workspace-card" key={href}>
+                <span className="workspace-card-number">0{index + 1}</span>
+                <p className="eyebrow">PROPERTY PROFESSIONAL</p>
+                <h2>{title}</h2>
+                <p>{description}</p>
+                <Link href={href}>
+                  {action}
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </article>
+            ))}
+          </section>
+        )}
+
+        {customer && (
+          <section className="workspace-grid">
+            {cards.map(([title, description, href, action], index) => (
+              <article className="workspace-card" key={href}>
+                <span className="workspace-card-number">0{index + 1}</span>
+                <p className="eyebrow">CUSTOMER</p>
+                <h2>{title}</h2>
+                <p>{description}</p>
+                <Link href={href}>
+                  {action}
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </article>
+            ))}
+          </section>
+        )}
+
+        {customer && (
+          <p className="honest-note">
+            <strong>Before you pay:</strong> Lagur reviews submitted documents and checks for duplicate listings. We do not guarantee legal title. Use a lawyer and a surveyor.
+          </p>
+        )}
+      </div>
     </AppShell>
   );
 }
