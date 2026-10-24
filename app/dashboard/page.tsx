@@ -12,23 +12,22 @@ const naira = (kobo: number) =>
     maximumFractionDigits: 0,
   }).format(kobo / 100);
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ preview?: string }> }) {
-  const params = await searchParams;
-  const previewRole = params.preview === "agent" ? "agent" : params.preview === "customer" ? "customer" : null;
-  const isDemoMode = demoMode() || Boolean(previewRole);
+export default async function DashboardPage() {
+  const isDemoMode = demoMode();
   const demoUser = {
     id: "demo-customer",
     email: "demo@lagur.app",
-    role: (previewRole ?? "customer") as "customer" | "agent" | "company" | "admin",
-    fullName: previewRole === "agent" ? "Demo Agent" : "Demo Customer",
+    role: "customer" as "customer" | "agent" | "company" | "admin",
+    fullName: "Demo Customer",
   };
 
-  const user = previewRole ? demoUser : isDemoMode ? demoUser : await requireUser();
-  const supabase = previewRole || isDemoMode ? null : await createClient();
-  const userRecord = previewRole ? demoUser : isDemoMode ? demoUser : await getUser();
+  const user = isDemoMode ? demoUser : await requireUser();
+  const supabase = isDemoMode ? null : await createClient();
+  const userRecord = isDemoMode ? demoUser : await getUser();
 
   const customer = user.role === "customer";
   const admin = user.role === "admin";
+  const agent = user.role === "agent" || user.role === "company";
 
   const { count: unreadCount } = supabase
     ? await supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null).eq("user_id", user.id)
@@ -121,7 +120,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </div>
         </header>
 
-        {!customer && !admin && (
+        {agent && (
           <>
             <section className="dashboard-signal glass-surface">
               <div className="panel-header">
@@ -294,7 +293,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </section>
         )}
 
-        {!customer && !admin && (
+        {agent && (
           <section className="workspace-grid">
             {cards.map(([title, description, href, action], index) => (
               <article className="workspace-card" key={href}>
