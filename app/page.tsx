@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { LoaderLink } from "@/components/loading/loader-link";
 import Logo from "../components/logo";
 import SparkleIcon from "../components/sparkle";
 import LazyMediaVideo, { type MediaVideoSource } from "../components/lazy-media-video";
@@ -244,7 +245,7 @@ export default function Home() {
           <details className="nav-dropdown"><summary>For agents <span>⌄</span></summary><div><a href="/sign-up?role=agent">List a property</a><a href="#agents">Verification</a></div></details>
           <details className="nav-dropdown"><summary>Resources <span>⌄</span></summary><div><a href="#how-it-works">How it works</a><a href="#safety">Trust and safety</a></div></details>
         </div>
-        <a className="nav-cta" href="/sign-up?role=customer">Get Started <Arrow /></a>
+        <LoaderLink className="nav-cta" href="/sign-up?role=customer">Get Started <Arrow /></LoaderLink>
         <button ref={menuButton} className="mobile-menu-trigger" type="button" aria-label="Open menu" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><span /><span /></button>
       </nav>
     </header>
@@ -252,7 +253,7 @@ export default function Home() {
     {menuOpen && <div className="mobile-menu" role="dialog" aria-modal="true" aria-label="Main menu" onMouseDown={(event) => { if (event.target === event.currentTarget) setMenuOpen(false); }}>
       <div className="mobile-menu-sheet"><div className="mobile-menu-head"><a className="wordmark" href="#top" aria-label="Lagur home" onClick={() => setMenuOpen(false)}><Logo /></a><button type="button" onClick={() => setMenuOpen(false)} aria-label="Close menu">Close <span>×</span></button></div>
         <div className="mobile-menu-links">{[["Rent", "#rent"], ["Buy", "#buy"], ["Land", "#land"], ["For agents", "#agents"], ["Resources", "#how-it-works"]].map(([title, href], index) => <a href={href} onClick={() => setMenuOpen(false)} key={title}><span>0{index + 1}</span>{title}<Arrow diagonal /></a>)}</div>
-        <a className="mobile-menu-cta" href="/sign-up?role=customer" onClick={() => setMenuOpen(false)}>Get Started <Arrow /></a>
+        <LoaderLink className="mobile-menu-cta" href="/sign-up?role=customer" onClick={() => setMenuOpen(false)}>Get Started <Arrow /></LoaderLink>
       </div>
     </div>}
 
@@ -272,7 +273,7 @@ export default function Home() {
         <div className="hero-feature-row reveal">
           <div className="hero-stat"><span className="stat-arrow" aria-hidden="true">↘</span><PlusMark /><strong>89%</strong><span className="stat-caption">Easy shortlist</span><span className="stat-subcaption">Homes within a 30-minute commute</span></div>
           <div className="hero-poster"><LazyMediaVideo className="hero-poster-video" sources={heroVideoSources} poster={mediaUrl("house 2-poster.webp")} label="Aerial video gliding above a residential neighborhood." /></div>
-          <div className="hero-aside"><p>We bring every listing, and the agent, into one conversation.</p><a className="green-cta" href="/sign-up?role=customer">I'm looking for a home <Arrow /></a></div>
+          <div className="hero-aside"><p>We bring every listing, and the agent, into one conversation.</p><LoaderLink className="green-cta" href="/sign-up?role=customer">I'm looking for a home <Arrow /></LoaderLink></div>
         </div>
       </div>
     </section>
@@ -343,7 +344,7 @@ export default function Home() {
           </svg>
           <div className="journey-stop stop-one reveal"><span className="stop-marker">01</span><article className="journey-card"><p className="eyebrow">CUSTOMER · START HERE</p><h3>Tell us what home means to you.</h3><p>Sign in as a customer, then describe what you need in everyday words: a room and parlor near campus, your budget, and the places you travel to.</p><div className="journey-prompt"><span>YOUR SEARCH</span><strong>Room and parlor near campus, budget [amount]</strong><Arrow /></div></article></div>
           <div className="journey-stop stop-two reveal"><span className="stop-marker">02</span><article className="journey-card"><p className="eyebrow">AI SEARCH</p><h3>Your words become a useful shortlist.</h3><p>The assistant turns your request into search filters and looks through verified listings. Results are grouped by company, location, type and budget, then ranked to help you compare.</p><div className="journey-tags"><span>By company</span><span>By location</span><span>By type</span><span>By budget</span></div></article></div>
-          <div className="agent-join reveal" id="agent-path"><div className="agent-join-line"><span>THE TWO SIDES MEET HERE</span><i /></div><div className="agent-join-card"><div className="agent-join-index">AGENT / COMPANY <span>01</span></div><div><h3>Professionals add the homes behind each match.</h3><p>Agents and companies create an account with business details, add property information and photos, then submit a Certificate of Occupancy, survey plan and supporting documents for review.</p><a href="/sign-up?role=agent">List your properties <Arrow /></a></div><div className="document-stack" aria-hidden="true"><span>PROPERTY DETAILS <b>READY</b></span><span>Survey plan <b>UPLOADED</b></span><span>Documents <b>FOR REVIEW</b></span></div></div></div>
+          <div className="agent-join reveal" id="agent-path"><div className="agent-join-line"><span>THE TWO SIDES MEET HERE</span><i /></div><div className="agent-join-card"><div className="agent-join-index">AGENT / COMPANY <span>01</span></div><div><h3>Professionals add the homes behind each match.</h3><p>Agents and companies create an account with business details, add property information and photos, then submit a Certificate of Occupancy, survey plan and supporting documents for review.</p><LoaderLink href="/sign-up?role=agent">List your properties <Arrow /></LoaderLink></div><div className="document-stack" aria-hidden="true"><span>PROPERTY DETAILS <b>READY</b></span><span>Survey plan <b>UPLOADED</b></span><span>Documents <b>FOR REVIEW</b></span></div></div></div>
           <div className="journey-stop stop-three reveal"><span className="stop-marker">03</span><article className="journey-card"><p className="eyebrow">REVIEW AND TRUST</p><h3>A listing is reviewed before it goes live.</h3><p>Submitted documents are checked by an admin, and duplicate parcels are flagged. Only approved listings appear in search. Fixed agent fees come from the property's location zone and type.</p><div className="verification-stamp"><span aria-hidden="true">✓</span><div><strong>Verified documents</strong><small>Reviewed before publication</small></div></div></article></div>
           <div className="journey-stop stop-four reveal"><span className="stop-marker">04</span><article className="journey-card"><p className="eyebrow">CUSTOMER · COMPARE</p><h3>Choose with the details in view.</h3><p>Open a match to see its location, property type, price, fixed fee and document status. Compare the options that fit your budget and the places you need to reach.</p><div className="listing-mini"><span className="listing-mini-image"><i /></span><span><b>[PROPERTY TYPE]</b><small>[LOCATION] · [PRICE]</small></span><em>Fixed fee: [amount]</em></div></article></div>
           <div className="journey-stop stop-five reveal"><span className="stop-marker">05</span><article className="journey-card"><p className="eyebrow">A DIRECT CONNECTION</p><h3>Chat with the agent. Arrange a visit.</h3><p>Start an in-app conversation from the listing. Suggest an inspection day; the agent can confirm or suggest another time. You can discuss the home before you travel.</p><div className="chat-preview"><span className="chat-avatar">A</span><span><b>Agent</b><small>Inspection requested for [date]</small></span><span className="chat-bubble">Let’s arrange a time.</span></div></article></div>
@@ -381,8 +382,8 @@ export default function Home() {
         <p className="eyebrow">YOUR NEXT MOVE STARTS HERE</p>
         <h2 id="sign-in-title">Where your next home<br /><span>gets found.</span></h2>
         <p className="signin-copy">Sign in to access your Lagur search, explore verified listings and speak with the agent. New here? Get started as a customer, agent or company.</p>
-        <div className="signin-actions"><a className="signin-primary" href="/sign-up?role=customer">Get Started <Arrow /></a><a className="signin-secondary" href="/sign-in">Sign in <Arrow /></a></div>
-        <div className="signin-agent">Listing homes instead? <a href="/sign-up?role=agent">Join as an agent or company <Arrow /></a></div>
+        <div className="signin-actions"><LoaderLink className="signin-primary" href="/sign-up?role=customer">Get Started <Arrow /></LoaderLink><LoaderLink className="signin-secondary" href="/sign-in">Sign in <Arrow /></LoaderLink></div>
+        <div className="signin-agent">Listing homes instead? <LoaderLink href="/sign-up?role=agent">Join as an agent or company <Arrow /></LoaderLink></div>
         <span className="signin-footnote">Verified listings. Fixed fees. A clearer way home.</span>
       </div>
     </section>
