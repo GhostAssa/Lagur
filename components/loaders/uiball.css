@@ -1,0 +1,54 @@
+/*
+  Loaders adapted from LDRS / UI Ball (https://uiball.com/ldrs), MIT licence.
+  Original React build: npm package "ldrs" v1.1.9. Class names prefixed with uib-.
+  Colour, size and speed are set through CSS variables so one prop controls each loader.
+*/
+
+/* Ring2: page and button loader */
+.uib-ring2 { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; height: var(--uib-size); width: var(--uib-size); }
+.uib-ring2__inner { height: var(--uib-size); width: var(--uib-size); transform-origin: center; animation: uib-rotate var(--uib-speed) linear infinite; will-change: transform; overflow: visible; }
+.uib-ring2__car { fill: none; stroke: var(--uib-color); stroke-dasharray: var(--uib-dash), var(--uib-gap); stroke-dashoffset: 0; stroke-linecap: round; transition: stroke 0.5s ease; }
+.uib-ring2__track { fill: none; stroke: var(--uib-color); opacity: var(--uib-bg-opacity); transition: stroke 0.5s ease; }
+@keyframes uib-rotate { 100% { transform: rotate(360deg); } }
+
+/* DotPulse: chat "agent is typing" and small inline waits */
+.uib-dotpulse { --uib-dot-size: calc(var(--uib-size) * 0.24); flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; height: var(--uib-dot-size); width: var(--uib-size); }
+.uib-dotpulse__inner { position: relative; display: flex; align-items: center; justify-content: space-between; width: 100%; height: 100%; }
+.uib-dotpulse__dot, .uib-dotpulse__inner::before, .uib-dotpulse__inner::after { content: ""; display: block; height: var(--uib-dot-size); width: var(--uib-dot-size); border-radius: 50%; background-color: var(--uib-color); transform: scale(0); transition: background-color 0.3s ease; }
+.uib-dotpulse__inner::before { animation: uib-dotpulse var(--uib-speed) ease-in-out calc(var(--uib-speed) * -0.375) infinite; }
+.uib-dotpulse__dot { animation: uib-dotpulse var(--uib-speed) ease-in-out calc(var(--uib-speed) * -0.25) infinite both; }
+.uib-dotpulse__inner::after { animation: uib-dotpulse var(--uib-speed) ease-in-out calc(var(--uib-speed) * -0.125) infinite; }
+@keyframes uib-dotpulse { 0%, 100% { transform: scale(0); } 50% { transform: scale(1); } }
+
+/* Waveform: AI is thinking */
+.uib-waveform { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; height: calc(var(--uib-size) * 0.9); width: var(--uib-size); }
+.uib-waveform__inner { display: flex; align-items: center; justify-content: space-between; width: var(--uib-size); height: calc(var(--uib-size) * 0.9); }
+.uib-waveform__bar { width: var(--uib-stroke); height: 100%; background-color: var(--uib-color); border-radius: 999px; transition: background-color 0.3s ease; }
+.uib-waveform__bar:nth-child(1) { animation: uib-grow var(--uib-speed) ease-in-out calc(var(--uib-speed) * -0.45) infinite; }
+.uib-waveform__bar:nth-child(2) { animation: uib-grow var(--uib-speed) ease-in-out calc(var(--uib-speed) * -0.3) infinite; }
+.uib-waveform__bar:nth-child(3) { animation: uib-grow var(--uib-speed) ease-in-out calc(var(--uib-speed) * -0.15) infinite; }
+.uib-waveform__bar:nth-child(4) { animation: uib-grow var(--uib-speed) ease-in-out infinite; }
+@keyframes uib-grow { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+
+/* Ripples: searching a place, finding recommendations */
+.uib-ripples { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; height: var(--uib-size); width: var(--uib-size); }
+.uib-ripples__inner { position: relative; height: var(--uib-size); width: var(--uib-size); }
+.uib-ripples__inner::before, .uib-ripples__inner::after, .uib-ripples__dot::before, .uib-ripples__dot::after { content: ""; position: absolute; top: 0; left: 0; height: 100%; width: 100%; border-radius: 50%; background-color: var(--uib-color); animation: uib-ripple var(--uib-speed) linear infinite; transform: scale(0); opacity: 0; transition: background-color 0.3s ease; }
+.uib-ripples__inner::after { animation-delay: calc(var(--uib-speed) / -4); }
+.uib-ripples__dot::before { animation-delay: calc(var(--uib-speed) * -0.5); }
+.uib-ripples__dot::after { animation-delay: calc(var(--uib-speed) * -0.75); }
+@keyframes uib-ripple { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+
+/* Pulsar: dashboard and empty-state loading */
+.uib-pulsar { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; height: var(--uib-size); width: var(--uib-size); }
+.uib-pulsar__inner { position: relative; height: var(--uib-size); width: var(--uib-size); }
+.uib-pulsar__inner::before, .uib-pulsar__inner::after { content: ""; position: absolute; top: 0; left: 0; height: 100%; width: 100%; border-radius: 50%; background-color: var(--uib-color); animation: uib-pulsar var(--uib-speed) ease-in-out infinite; transform: scale(0); transition: background-color 0.3s ease; }
+.uib-pulsar__inner::after { animation-delay: calc(var(--uib-speed) / -2); }
+@keyframes uib-pulsar { 0%, 100% { transform: scale(0); opacity: 1; } 50% { transform: scale(1); opacity: 0.25; } }
+
+/* Reduced motion: keep the loaders (they signal progress) but slow them down */
+@media (prefers-reduced-motion: reduce) {
+  .uib-ring2__inner, .uib-dotpulse__inner::before, .uib-dotpulse__dot, .uib-dotpulse__inner::after,
+  .uib-waveform__bar, .uib-ripples__inner::before, .uib-ripples__inner::after, .uib-ripples__dot::before, .uib-ripples__dot::after,
+  .uib-pulsar__inner::before, .uib-pulsar__inner::after { animation-duration: calc(var(--uib-speed) * 2.5); }
+}
